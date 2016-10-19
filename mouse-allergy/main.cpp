@@ -4,7 +4,9 @@
 #include <math.h>
 
 static POINT cursor = {};
-static const int THRESHOLD = 16;
+
+static const int THRESHOLD = 32;
+static const int SPEED = 16;
 
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
@@ -25,21 +27,22 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 		return true;
 	}
 
-	auto dir_x = (float)(cursor.x - (rect.left + (rect.right - rect.left) / 2));
-	auto dir_y = (float)(cursor.y - (rect.top + (rect.bottom - rect.top) /2));
-	auto m = (float)sqrt((dir_x * dir_x) + (dir_y * dir_y));
+	auto center_x = rect.left + (rect.right - rect.left) / 2;
+	auto center_y = rect.top + (rect.bottom - rect.top) / 2;
+	auto dir_x = (float)(cursor.x - center_x);
+	auto dir_y = (float)(cursor.y - center_y);
+	auto length = (float)sqrt(dir_x * dir_x + dir_y * dir_y);
 
-	dir_x /= m;
-	dir_y /= m;
+	dir_x /= length;
+	dir_y /= length;
 
-	x += (int)(THRESHOLD * -dir_x);
-	y += (int)(THRESHOLD * -dir_y);
+	x += (int)(SPEED * -dir_x);
+	y += (int)(SPEED * -dir_y);
 
 	if (x != rect.left || y != rect.top)
 	{
 		SetWindowPos(hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE);
 	}
-
 
 	return true;
 }
@@ -49,10 +52,13 @@ void main()
 	while (true)
 	{
 		// ABORT ABORT ABORT
-		auto helpme = GetAsyncKeyState(VK_ESCAPE);
-		if ((1 << 16) & helpme)
+		auto modifiers = GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(VK_MENU);
+
+		if (modifiers & 1 << 16)
 		{
-			return;
+			auto key = GetAsyncKeyState('W');
+			if (key != 0)
+				return;
 		}
 
 		GetCursorPos(&cursor);
