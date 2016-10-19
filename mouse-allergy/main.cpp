@@ -2,16 +2,28 @@
 #include <Windows.h>
 
 #include <math.h>
+#include <unordered_map>
 
+static std::unordered_map<HWND, RECT> backup;
 static POINT cursor = {};
-
 static const int THRESHOLD = 32;
 static const int SPEED = 16;
 
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
+	if (hwnd == GetDesktopWindow() || hwnd == GetShellWindow())
+	{
+		return true;
+	}
+
 	RECT rect;
 	GetWindowRect(hwnd, &rect);
+
+	auto it = backup.find(hwnd);
+	if (it == backup.end())
+	{
+		backup[hwnd] = rect;
+	}
 
 	auto x = rect.left;
 	auto y = rect.top;
@@ -57,8 +69,17 @@ void main()
 		if (modifiers & 1 << 16)
 		{
 			auto key = GetAsyncKeyState('W');
-			if (key != 0)
+			if (key & 1 << 16)
+			{
+				for (auto& it : backup)
+				{
+					const auto& rect = it.second;
+					SetWindowPos(it.first, nullptr, rect.left, rect.top,
+						rect.right - rect.left, rect.bottom - rect.top, SWP_ASYNCWINDOWPOS);
+				}
+
 				return;
+			}
 		}
 
 		GetCursorPos(&cursor);
