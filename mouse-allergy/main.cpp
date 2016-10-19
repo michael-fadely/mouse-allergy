@@ -11,14 +11,19 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 	RECT rect;
 	GetWindowRect(hwnd, &rect);
 
+	auto x = rect.left;
+	auto y = rect.top;
+
+	rect.left   -= THRESHOLD;
+	rect.right  += THRESHOLD;
+	rect.top    -= THRESHOLD;
+	rect.bottom += THRESHOLD;
+
 	if (cursor.x < rect.left || cursor.x > rect.right
 		|| cursor.y < rect.top || cursor.y > rect.bottom)
 	{
 		return true;
 	}
-
-	auto x = rect.left;
-	auto y = rect.top;
 
 	auto dir_x = (float)(cursor.x - (rect.left + (rect.right - rect.left) / 2));
 	auto dir_y = (float)(cursor.y - (rect.top + (rect.bottom - rect.top) /2));
