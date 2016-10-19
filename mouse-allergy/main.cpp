@@ -4,19 +4,7 @@
 #include <math.h>
 
 static POINT cursor = {};
-static const auto THRESHOLD = 16.0f;
-
-int RunAway(const long& cursor, const long& base, const long &center)
-{
-	auto dist = abs(cursor - center);
-	auto window_center = center - base;
-
-	auto m = (window_center - dist) / (float)window_center;
-	if (cursor >= center)
-		m = -m;
-
-	return (int)(THRESHOLD * m);
-}
+static const int THRESHOLD = 16;
 
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
@@ -29,25 +17,24 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 		return true;
 	}
 
-	int x = rect.left;
-	int y = rect.top;
+	auto x = rect.left;
+	auto y = rect.top;
 
-	if (cursor.x >= rect.left && cursor.x <= rect.right)
-	{
-		auto center = rect.left + (rect.right - rect.left) / 2;
-		x += RunAway(cursor.x, rect.left, center);
-	}
+	auto dir_x = (float)(cursor.x - (rect.left + (rect.right - rect.left) / 2));
+	auto dir_y = (float)(cursor.y - (rect.top + (rect.bottom - rect.top) /2));
+	auto m = (float)sqrt((dir_x * dir_x) + (dir_y * dir_y));
 
-	if (cursor.y >= rect.top && cursor.y <= rect.bottom)
-	{
-		auto center = rect.top + (rect.bottom - rect.top) / 2;
-		y += RunAway(cursor.y, rect.top, center);
-	}
+	dir_x /= m;
+	dir_y /= m;
+
+	x += (int)(THRESHOLD * -dir_x);
+	y += (int)(THRESHOLD * -dir_y);
 
 	if (x != rect.left || y != rect.top)
 	{
 		SetWindowPos(hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE);
 	}
+
 
 	return true;
 }
