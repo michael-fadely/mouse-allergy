@@ -2,14 +2,22 @@
 #include <Windows.h>
 #include <unordered_map>
 
+constexpr int THRESHOLD = 32;
+constexpr int SPEED     = 16;
+
 static std::unordered_map<HWND, RECT> backup;
 static POINT cursor = {};
-static const int THRESHOLD = 32;
-static const int SPEED = 16;
 
 BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 {
 	if (hwnd == GetDesktopWindow() || hwnd == GetShellWindow())
+	{
+		return true;
+	}
+
+	const auto style = GetWindowLong(hwnd, GWL_STYLE);
+
+	if (!(style & WS_VISIBLE))
 	{
 		return true;
 	}
@@ -31,23 +39,25 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 	rect.top    -= THRESHOLD;
 	rect.bottom += THRESHOLD;
 
-	if (cursor.x < rect.left || cursor.x > rect.right
-		|| cursor.y < rect.top || cursor.y > rect.bottom)
+	if (cursor.x < rect.left || cursor.x > rect.right ||
+	    cursor.y < rect.top || cursor.y > rect.bottom)
 	{
 		return true;
 	}
 
 	const auto center_x = rect.left + (rect.right - rect.left) / 2;
 	const auto center_y = rect.top + (rect.bottom - rect.top) / 2;
-	auto dir_x = (float)(cursor.x - center_x);
-	auto dir_y = (float)(cursor.y - center_y);
-	const auto length = (float)sqrt(dir_x * dir_x + dir_y * dir_y);
+
+	auto dir_x = static_cast<float>(cursor.x - center_x);
+	auto dir_y = static_cast<float>(cursor.y - center_y);
+
+	const auto length = static_cast<float>(sqrt(dir_x * dir_x + dir_y * dir_y));
 
 	dir_x /= length;
 	dir_y /= length;
 
-	x += (int)(SPEED * -dir_x);
-	y += (int)(SPEED * -dir_y);
+	x += static_cast<int>(SPEED * -dir_x);
+	y += static_cast<int>(SPEED * -dir_y);
 
 	if (x != rect.left || y != rect.top)
 	{
@@ -73,7 +83,7 @@ void main()
 				{
 					const auto& rect = it.second;
 					SetWindowPos(it.first, nullptr, rect.left, rect.top,
-						rect.right - rect.left, rect.bottom - rect.top, SWP_ASYNCWINDOWPOS);
+					             rect.right - rect.left, rect.bottom - rect.top, SWP_ASYNCWINDOWPOS);
 				}
 
 				return;
