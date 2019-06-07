@@ -61,7 +61,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 
 	if (x != rect.left || y != rect.top)
 	{
-		SetWindowPos(hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE);
+		SetWindowPos(hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_ASYNCWINDOWPOS);
 	}
 
 	return true;
